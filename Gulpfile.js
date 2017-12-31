@@ -1,40 +1,47 @@
+require('dotenv').config();
 const gulp = require('gulp');
 const responsive = require('gulp-responsive');
-
-gulp.task('full', () => {
-  return gulp.src('src/**/*.png')
-    .pipe(responsive({
-      '*/*': {
-        quality: 80,
-        progressive: true,
-      },
-    }))
-    .pipe(gulp.dest('dist/full'));
+const s3 = require('gulp-s3-upload')({
+  accessKeyId: process.env.ACCESS_KEY_ID,
+  secretAccessKey: process.env.SECRET_ACCESS_KEY,
 });
 
-gulp.task('medium', () => {
-  return gulp.src('src/**/*.png')
-  .pipe(responsive({
-    '*/*': {
-      width: 700,
-      quality: 60,
-      flatten: true,
-      progressive: true,
-    },
-  }))
-  .pipe(gulp.dest('dist/medium'));
-});
+const makeImageTask = (customConfig = []) => {
 
-gulp.task('thumb', () => {
-  return gulp.src('src/**/*.png')
-  .pipe(responsive({
-    '*/*': {
-      width: 400,
-      quality: 60,
-      flatten: true,
-    },
-  }))
-  .pipe(gulp.dest('dist/thumb'));
-});
+  const config = customConfig.map(c => Object.assign({
+    skipOnEnlargement: true,
+    withoutEnlargement: false,
+    progressive: true,
+    flatten: true,
+  }, c));
 
-gulp.task('default', ['full', 'medium', 'thumb']);
+  return gulp.task('images', () => {
+    return gulp.src('src/**/*.{png,gif,jpg}')
+      .pipe(responsive({
+        '*': config,
+        '*/*': config,
+      }))
+      .pipe(gulp.dest(`dist`))
+      .pipe(s3({
+        Bucket: process.env.BUCKET_NAME,
+        ACL: 'public-read',
+      }, {
+        maxRetries: 5
+      }));
+  });
+};
+
+makeImageTask([{
+  width: 200,
+  rename: { suffix: '-200px' },
+}, {
+  width: 450,
+  rename: { suffix: '-450px' },
+}, {
+  width: 700,
+  rename: { suffix: '-700px' },
+}, {
+  rename: { suffix: '-original' },
+}]);
+
+gulp.task('default', ['images']);

@@ -11,8 +11,10 @@
   "author": "Eric Masiello <eric.j.masiello@gmail.com> (http://synbydesign.com/)",
   "license": "MIT",
   "devDependencies": {
+    "dotenv": "~4.0.0",
     "gulp": "~3.9.1",
     "gulp-responsive": "~2.8.0",
+    "gulp-s3-upload": "~1.6.6",
     "rimraf": "~2.6.2"
   }
 }

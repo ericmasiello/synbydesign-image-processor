@@ -6,6 +6,8 @@ const s3 = require('gulp-s3-upload')({
   secretAccessKey: process.env.SECRET_ACCESS_KEY,
 });
 
+const TWO_WEEKS = 1000 * 60 * 60 * 24 * 14;
+
 const makeImageTask = (customConfig = []) => {
 
   const config = customConfig.map(c => Object.assign({
@@ -25,6 +27,7 @@ const makeImageTask = (customConfig = []) => {
       .pipe(s3({
         Bucket: process.env.BUCKET_NAME,
         ACL: 'public-read',
+        CacheControl: `max-age=${TWO_WEEKS}`,
       }, {
         maxRetries: 5
       }));
